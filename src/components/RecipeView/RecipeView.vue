@@ -391,6 +391,8 @@ import RecipeNutritionInfoItem from './RecipeNutritionInfoItem.vue';
 import RecipeTimer from './RecipeTimer.vue';
 import RecipeTool from './RecipeTool.vue';
 
+const props = defineProps<{ publicToken?: string }>();
+
 const t = window.t;
 const route = useRoute();
 const routeId = computed(() => String(route.params.id ?? ''));
@@ -607,7 +609,7 @@ const isNullOrEmpty = (str: unknown) =>
  * Callback for click on keyword
  */
 const keywordClicked = (keyword: string) => {
-    if (keyword) {
+    if (keyword && !props.publicToken) {
         router.push(`/tags/${keyword}`);
     }
 };
@@ -633,7 +635,9 @@ const setup = async () => {
     }
 
     try {
-        const response = await api.recipes.get(routeId.value);
+        const response = props.publicToken
+            ? await api.recipes.getPublic(props.publicToken)
+            : await api.recipes.get(routeId.value);
         const tmpRecipe = response.data;
         // Store recipe data in vuex
         legacyStore.setRecipe({ recipe: tmpRecipe });
