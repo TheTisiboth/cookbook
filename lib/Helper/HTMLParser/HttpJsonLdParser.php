@@ -80,30 +80,17 @@ class HttpJsonLdParser extends AbstractHtmlParser {
 			throw new HtmlParsingException($this->l->t('No recipe was found.'));
 		}
 
-		if ($assumeSchemaContext) {
-			$json = ['@context' => 'https://schema.org', '@graph' => isset($json[0]) ? $json : [$json]];
+		// Some sites return an array of JSON objects instead of a plain recipe object
+		$recipe = $this->searchForRecipeInArray(isset($json[0]) ? $json : [$json], $assumeSchemaContext ? 'https://schema.org' : null);
+
+		if ($recipe === null) {
+			throw new HtmlParsingException($this->l->t('No recipe was found.'));
 		}
 
-		// Look through @graph field for recipe
-		$this->mapGraphField($json);
+		// Ensure the type of the object is plain 'Recipe'
+		$this->checkForArrayType($recipe);
 
-		// Look for an array of recipes
-		$this->mapArray($json);
-
-		$this->mapMainEntity($json);
-
-		if ($this->jsonService->isSchemaObject($json, 'Recipe', true, false)) {
-			// Ensure the type of the object is never an array
-			$this->checkForArrayType($json);
-
-			// We found our recipe
-			return $json;
-		} else {
-			// Continue with other approaches
-		}
-
-		//
-		throw new HtmlParsingException($this->l->t('No recipe was found.'));
+		return $recipe;
 	}
 
 	/**
@@ -152,7 +139,7 @@ class HttpJsonLdParser extends AbstractHtmlParser {
 			$tmp = $this->searchForRecipeInArray($json['@graph'], $json['@context'] ?? null);
 
 			if ($tmp !== null) {
-				$json = $this->resolveReferences($tmp, $json['@graph']);
+				$json = $this->resolveImageReferences($tmp, $json['@graph']);
 			}
 		}
 	}
@@ -164,7 +151,7 @@ class HttpJsonLdParser extends AbstractHtmlParser {
 	 * @param array $graph The graph containing the referenced objects
 	 * @return array The recipe with resolved image references
 	 */
-	private function resolveReferences(array $recipe, array $graph): array {
+	private function resolveImageReferences(array $recipe, array $graph): array {
 		if (!isset($recipe['image']) || !is_array($recipe['image'])) {
 			return $recipe;
 		}
@@ -183,34 +170,8 @@ class HttpJsonLdParser extends AbstractHtmlParser {
 	 * @param array $json The JSON object to check
 	 */
 	private function mapMainEntity(array &$json) {
-		if (isset($json['mainEntity']) && $this->jsonService->isSchemaObject($json['mainEntity'], 'Recipe', false, false)) {
-			$entity = $json['mainEntity'];
-
-			if (isset($json['@context']) && !isset($entity['@context'])) {
-				$entity['@context'] = $json['@context'];
-			}
-
-			$json = $entity;
-		}
-	}
-
-	/**
-	 * Look for an array of recipes.
-	 *
-	 * Some sites return an array of JSON objects instead of a plain recipe object.
-	 * This functions checks for an indexed array and searches in it for recipes.
-	 *
-	 * When an array of recipes is found, the first found recipe will be used and written over the
-	 * input parameter.
-	 * @param array $json The JSON object to inspect
-	 */
-	private function mapArray(array &$json) {
-		if (isset($json[0])) {
-			$tmp = $this->searchForRecipeInArray($json);
-
-			if ($tmp !== null) {
-				$json = $tmp;
-			}
+		if (isset($json['mainEntity']) && is_array($json['mainEntity'])) {
+			$json = $this->searchForRecipeInArray([$json['mainEntity']], $json['@context'] ?? null) ?? $json;
 		}
 	}
 
