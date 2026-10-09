@@ -23,6 +23,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
+use OCP\Files\Node;
 use OCP\Files\NotFoundException;
 use OCP\IL10N;
 use OCP\Image;
@@ -150,13 +151,22 @@ class RecipeService {
 			return null;
 		}
 
-		$recipe_folder = $recipe_folder[0];
+		return $this->getRecipeFileInFolder($recipe_folder[0]);
+	}
 
-		if ($recipe_folder instanceof Folder === false) {
+	/**
+	 * Returns the recipe file stored directly inside a recipe folder
+	 *
+	 * @param Node|null $recipeFolder
+	 *
+	 * @return File|null
+	 */
+	public function getRecipeFileInFolder(?Node $recipeFolder): ?File {
+		if (!$recipeFolder instanceof Folder) {
 			return null;
 		}
 
-		foreach ($recipe_folder->getDirectoryListing() as $file) {
+		foreach ($recipeFolder->getDirectoryListing() as $file) {
 			if ($this->isRecipeFile($file)) {
 				return $file;
 			}
@@ -618,16 +628,26 @@ class RecipeService {
 			throw new Exception($this->il10n->t('Recipe with ID %d not found.', [$id]));
 		}
 
-		$recipe_folder = $recipe_folders[0];
+		return $this->getRecipeImageFileInFolder($recipe_folders[0], $size);
+	}
 
+	/**
+	 * Gets the image file of a recipe folder
+	 *
+	 * @param Folder $recipeFolder
+	 * @param string $size
+	 *
+	 * @return File
+	 */
+	public function getRecipeImageFileInFolder(Folder $recipeFolder, $size = 'thumb'): File {
 		// TODO: Check that file is really an image
 		switch ($size) {
 			case 'full':
-				return $this->imageService->getImageAsFile($recipe_folder);
+				return $this->imageService->getImageAsFile($recipeFolder);
 			case 'thumb':
-				return $this->imageService->getThumbnailAsFile($recipe_folder, ImageSize::THUMBNAIL);
+				return $this->imageService->getThumbnailAsFile($recipeFolder, ImageSize::THUMBNAIL);
 			case 'thumb16':
-				return $this->imageService->getThumbnailAsFile($recipe_folder, ImageSize::MINI_THUMBNAIL);
+				return $this->imageService->getThumbnailAsFile($recipeFolder, ImageSize::MINI_THUMBNAIL);
 			default:
 				throw new Exception($this->il10n->t('Image size "%s" is not recognized.', [$size]));
 		}
