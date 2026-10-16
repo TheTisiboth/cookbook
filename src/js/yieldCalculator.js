@@ -3,12 +3,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR AGPL-3.0-or-later
 
 /*
-    The ingredientAmountRegExp is used both to validate an ingredient and to recalculate it.
-    The amount is a fraction (optionally with a whole part) or a decimal, must not be followed
-    by another unicode number, and may have a unit. It must be followed by a whitespace and further text.
+    The ingredientAmountRegExp is used both to validate an ingredient and to recalculate it:
+    an amount, an optional unit, a whitespace and further text.
 */
-const ingredientAmountRegExp =
-    /^(?<amount>(?:(?<wholeNumber>\d+)(?:\s+|(?=[\u00BC-\u00BE\u2150-\u215E])))?(?:(?<unicodeFraction>[\u00BC-\u00BE\u2150-\u215E])|(?<numerator>\d+)\s*\/\s*(?<denominator>\d+))|(?<decimal>\d+(?:\.\d+)?))(?!\s*\p{No})[a-zA-z]*\s.*$/u;
+// ½, ¾, ⅛, …
+const unicodeFractionPattern = String.raw`[\u00BC-\u00BE\u2150-\u215E]`;
+// "1 " in "1 ½" or "1 1/2", "1" in "1½"
+const wholeNumberPattern = String.raw`(?<wholeNumber>\d+)(?:\s+|(?=${unicodeFractionPattern}))`;
+// 1/2, 1 / 2
+const asciiFractionPattern = String.raw`(?<numerator>\d+)\s*/\s*(?<denominator>\d+)`;
+// ½, 1 ½, 1½, 1/2, 1 1/2
+const fractionPattern = String.raw`(?:${wholeNumberPattern})?(?:(?<unicodeFraction>${unicodeFractionPattern})|${asciiFractionPattern})`;
+// 200, 1.5
+const decimalPattern = String.raw`(?<decimal>\d+(?:\.\d+)?)`;
+// rejects "1 ¹⁄₂" or "¼ ²"
+const notFollowedByUnicodeNumberPattern = String.raw`(?!\s*\p{No})`;
+// "g" in "200g"
+const unitPattern = String.raw`[a-zA-z]*`;
+
+const ingredientAmountRegExp = new RegExp(
+    String.raw`^(?<amount>${fractionPattern}|${decimalPattern})${notFollowedByUnicodeNumberPattern}${unitPattern}\s.*$`,
+    'u',
+);
 
 /*
     The ingredientMultipleSeperatorsRegExp is used to check whether the string contains
