@@ -1,20 +1,11 @@
-/**
- * @jest-environment jsdom
- * @jest-environment-options {"customExportConditions": ["node", "node-addons"]}
- */
+// @vitest-environment jsdom
 
 // SPDX-FileCopyrightText: 2026 Nextcloud cookbook contributors
 //
 // SPDX-License-Identifier: AGPL-3.0-only OR AGPL-3.0-or-later
 
-import { afterEach, jest } from '@jest/globals';
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
-
-jest.unstable_mockModule('../../../js/helper', () => ({ default: {} }));
-jest.unstable_mockModule('caret-pos', () => ({ position: () => ({}) }));
-
-const { default: EditInputGroup } =
-    await import('../../../components/FormComponents/EditInputGroup.vue');
+import EditInputGroup from '../../../components/FormComponents/EditInputGroup.vue';
 
 window.t = (app, text) => text;
 
