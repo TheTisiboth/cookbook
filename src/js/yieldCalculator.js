@@ -3,28 +3,28 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR AGPL-3.0-or-later
 
 /*
-    The ingredientFractionRegExp is used to identify fractions in the string.
-    This is used to exclude strings that contain fractions from being valid.
+    The ingredientAmountRegExp is used both to validate an ingredient and to recalculate it.
+    The amount is a fraction (optionally with a whole part) or a decimal, must not be followed
+    by another unicode number, and may have a unit. It must be followed by a whitespace and further text.
 */
-const fractionRegExp =
-    /^((\d+(?:\s+|(?=[\u00BC-\u00BE\u2150-\u215E])))?(?:([\u00BC-\u00BE\u2150-\u215E])|(\d+)\s*\/\s*(\d+))).*/u;
+const ingredientAmountRegExp =
+    /^(?<amount>(?:(?<wholeNumber>\d+)(?:\s+|(?=[\u00BC-\u00BE\u2150-\u215E])))?(?:(?<unicodeFraction>[\u00BC-\u00BE\u2150-\u215E])|(?<numerator>\d+)\s*\/\s*(?<denominator>\d+))|(?<decimal>\d+(?:\.\d+)?))(?!\s*\p{No})[a-zA-z]*\s.*$/u;
+
+/*
+    The ingredientMultipleSeperatorsRegExp is used to check whether the string contains
+    more than one separator (.,) after a number. This is used to exclude strings that
+    contain more than one separator from being valid.
+*/
+const ingredientMultipleSeparatorsRegExp = /^-?\d+(?:[.,]\d+){2,}.*/;
+
+function parseIngredientAmount(ingredient) {
+    if (ingredientMultipleSeparatorsRegExp.test(ingredient)) {
+        return null;
+    }
+    return ingredient.match(ingredientAmountRegExp)?.groups ?? null;
+}
 
 function isValidIngredientSyntax(ingredient) {
-    /*
-        The ingredientSyntaxRegExp checks whether the ingredient string starts with a fraction,
-        or a whole part and fraction, or a decimal.
-        It may optionally have a unit but must be proceeded by a single whitespace and further text.
-    */
-    const ingredientSyntaxRegExp =
-        /^(?:(?:\d+(?:\s|(?=[\u00BC-\u00BE\u2150-\u215E])))?(?:\d+\/\d+|[\u00BC-\u00BE\u2150-\u215E])|\d+(?:\.\d+)?)(?!\s*\p{No})[a-zA-z]*\s.*$/u;
-
-    /*
-        The ingredientMultipleSeperatorsRegExp is used to check whether the string contains
-        more than one separator (.,) after a number. This is used to exclude strings that
-        contain more than one separator from being valid.
-    */
-    const ingredientMultipleSeparatorsRegExp = /^-?\d+(?:[.,]\d+){2,}.*/;
-
     /*
         startsWithDoubleHashRegExp checks if the ingredient string begins with "## " followed by any characters.
     */
@@ -32,8 +32,7 @@ function isValidIngredientSyntax(ingredient) {
 
     return (
         startsWithDoubleHashRegExp.test(ingredient) ||
-        (ingredientSyntaxRegExp.test(ingredient) &&
-            !ingredientMultipleSeparatorsRegExp.test(ingredient))
+        parseIngredientAmount(ingredient) !== null
     );
 }
 
@@ -51,72 +50,56 @@ function recalculateIngredients(ingredients, currentYield, originalYield) {
             return ingredient;
         }
 
-        const matches = ingredient.match(fractionRegExp);
-
-        // Fraction
-        if (matches && isValidIngredientSyntax(ingredient)) {
-            const [
-                ,
-                fractionMatch,
-                wholeNumberPartRaw,
-                unicodeFractionRaw,
-                numeratorRaw,
-                denominatorRaw,
-            ] = matches;
-            const wholeNumberPart = wholeNumberPartRaw
-                ? parseInt(wholeNumberPartRaw, 10)
-                : 0;
-            let numerator = 0;
-            let denominator = 0;
-            // Unicode fraction
-            if (unicodeFractionRaw) {
-                [numerator, denominator] = unicodeFractionRaw
-                    .normalize('NFKD')
-                    .split('\u2044')
-                    .map((x) => parseInt(x, 10));
-            } else {
-                numerator = parseInt(numeratorRaw, 10);
-                denominator = parseInt(denominatorRaw, 10);
-            }
-
-            const decimalAmount = wholeNumberPart + numerator / denominator;
-            let newAmount = (decimalAmount / originalYield) * currentYield;
-            const newWholeNumberPart = parseInt(newAmount, 10);
-            let newNumerator = (newAmount - newWholeNumberPart) * 16;
-            if (Number.isInteger(newNumerator)) {
-                const gcd = (a, b) => (b ? gcd(b, a % b) : a);
-                const div = gcd(newNumerator, 16);
-                newNumerator /= div;
-                const newDenominator = 16 / div;
-                const prefix = newWholeNumberPart
-                    ? `${newWholeNumberPart} `
-                    : '';
-                newAmount = `${prefix}${newNumerator}/${newDenominator}`;
-            } else {
-                newAmount = newAmount.toFixed(2).replace(/[.]00$/, '');
-            }
-
-            const newIngredient = ingredient.replace(fractionMatch, newAmount);
-            return newIngredient;
+        const parsedAmount = parseIngredientAmount(ingredient);
+        if (!parsedAmount) {
+            return ingredient;
         }
+
+        const {
+            amount,
+            wholeNumber,
+            unicodeFraction,
+            numerator,
+            denominator,
+            decimal,
+        } = parsedAmount;
+        const remainder = ingredient.slice(amount.length);
 
         // Decimal
-        if (isValidIngredientSyntax(ingredient)) {
-            const possibleUnit = ingredient
-                .split(' ')[0]
-                .replace(/[^a-zA-Z]/g, '');
-            const amount = parseFloat(
-                ingredient.split(' ')[0].replace(',', '.'),
-            );
-            const unitAndIngredient = ingredient.split(' ').slice(1).join(' ');
-
-            let newAmount = (amount / originalYield) * currentYield;
+        if (decimal) {
+            let newAmount =
+                (parseFloat(decimal) / originalYield) * currentYield;
             newAmount = newAmount.toFixed(2).replace(/[.]00$/, '');
 
-            return `${newAmount}${possibleUnit} ${unitAndIngredient}`;
+            return `${newAmount}${remainder}`;
         }
 
-        return ingredient;
+        // Fraction
+        const [fractionNumerator, fractionDenominator] = unicodeFraction
+            ? unicodeFraction
+                  .normalize('NFKD')
+                  .split('\u2044')
+                  .map((x) => parseInt(x, 10))
+            : [parseInt(numerator, 10), parseInt(denominator, 10)];
+        const wholeNumberPart = wholeNumber ? parseInt(wholeNumber, 10) : 0;
+
+        const decimalAmount =
+            wholeNumberPart + fractionNumerator / fractionDenominator;
+        let newAmount = (decimalAmount / originalYield) * currentYield;
+        const newWholeNumberPart = parseInt(newAmount, 10);
+        let newNumerator = (newAmount - newWholeNumberPart) * 16;
+        if (Number.isInteger(newNumerator)) {
+            const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+            const div = gcd(newNumerator, 16);
+            newNumerator /= div;
+            const newDenominator = 16 / div;
+            const prefix = newWholeNumberPart ? `${newWholeNumberPart} ` : '';
+            newAmount = `${prefix}${newNumerator}/${newDenominator}`;
+        } else {
+            newAmount = newAmount.toFixed(2).replace(/[.]00$/, '');
+        }
+
+        return `${newAmount}${remainder}`;
     });
 }
 
