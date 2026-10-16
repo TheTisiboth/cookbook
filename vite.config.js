@@ -71,6 +71,10 @@ export default createAppConfig(
 					...customPlugins,
 					devEntryRewritePlugin,
 				],
+				test: {
+					globals: true,
+					include: ['src/tests/**/*.test.js'],
+				},
 				server: {
 					port: Number(env.VITE_PORT ?? 5173),
 					host: '0.0.0.0',

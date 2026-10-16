@@ -53,10 +53,8 @@ export default [
       'vendor/**',
       '.vscode/**',
 
-      'babel.config.cjs',
       'eslint.config.js',
       'stylelint.config.cjs',
-      'jest.config.cjs',
       'vite.config.js',
     ],
   },
