@@ -78,6 +78,8 @@ describe('recalculateIngredients', () => {
         ['1 ¹⁄₂ cup flour', 1, 2, '1 ¹⁄₂ cup flour'],
         ['¼² cup milk', 1, 2, '¼² cup milk'],
         ['¼ ² cup milk', 1, 2, '¼ ² cup milk'],
+        ['1 / 2 cup sugar', 1, 3, '1 1/2 cup sugar'],
+        ['200 g carrots', 2, 3, '300 g carrots'],
     ])(
         'scales "%s" from %i to %i servings',
         (ingredient, originalYield, currentYield, expected) => {
