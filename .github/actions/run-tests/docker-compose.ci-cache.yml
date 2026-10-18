@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: 2026 Nextcloud cookbook contributors
+#
+# SPDX-License-Identifier: AGPL-3.0-only OR AGPL-3.0-or-later
+
+services:
+    mysql:
+        build:
+            cache_from:
+                - type=gha,scope=mysql
+            cache_to:
+                - type=gha,mode=max,scope=mysql
+
+    postgres:
+        build:
+            cache_from:
+                - type=gha,scope=postgres
+            cache_to:
+                - type=gha,mode=max,scope=postgres
+
+    www:
+        build:
+            context: www
+            cache_from:
+                - type=gha,scope=www
+            cache_to:
+                - type=gha,mode=max,scope=www
+
+    dut:
+        build:
+            cache_from:
+                - type=gha,scope=dut-php${PHP_VERSION}
+            cache_to:
+                - type=gha,mode=max,scope=dut-php${PHP_VERSION}
+
+    occ:
+        image: cookbook_unittesting_dut
+        build: !reset null
+
+    php:
+        image: cookbook_unittesting_dut
+        build: !reset null
+
+    fpm:
+        image: cookbook_unittesting_dut
+        build: !reset null
