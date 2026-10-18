@@ -90,7 +90,7 @@ def handleDockerImages(args):
 	l.logger.startGroup('Prepare docker')
 	t.tic()
 
-	if args.pull or args.create_images:
+	if args.pull:
 		pullImages(args, not args.verbose)
 		t.toc('Pulling done')
 
