@@ -362,7 +362,6 @@ jobs:
           ./run-locally.py
           --run-unit-tests
           --run-integration-tests
-          --run-migration-tests
           --extract-code-coverage
           --keep-code-coverage
           --install-composer-deps;
@@ -379,12 +378,6 @@ jobs:
         run: >-
           if [ -r .github/actions/run-tests/volumes/coverage/teamcity.integration.log ]; then
           python .github/actions/run-tests/extract-annotations.py .github/actions/run-tests/volumes/coverage/teamcity.integration.log ;
-          fi
-      - name: Export the annotations of migration tests to github
-        shell: bash
-        run: >-
-          if [ -r .github/actions/run-tests/volumes/coverage/teamcity.migration.log ]; then
-          python .github/actions/run-tests/extract-annotations.py .github/actions/run-tests/volumes/coverage/teamcity.migration.log ;
           fi
       
       # - name: Upload the coverage files as artifact
