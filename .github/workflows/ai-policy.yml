@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   check-ai-trailers:
-    runs-on: ubuntu-latest-low
+    runs-on: ${{ github.repository == 'nextcloud/cookbook' && 'ubuntu-latest-low' || 'ubuntu-latest' }}
     steps:
       - name: Collect PR commit messages
         id: collect

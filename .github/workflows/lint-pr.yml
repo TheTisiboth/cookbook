@@ -17,7 +17,7 @@ on:
 jobs:
   main:
     name: Validate PR title
-    runs-on: ubuntu-latest-low
+    runs-on: ${{ github.repository == 'nextcloud/cookbook' && 'ubuntu-latest-low' || 'ubuntu-latest' }}
     permissions:
       pull-requests: read
     steps:

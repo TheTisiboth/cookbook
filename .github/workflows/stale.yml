@@ -10,7 +10,7 @@ on:
 
 jobs:
     stale:
-        runs-on: ubuntu-latest-low
+        runs-on: ${{ github.repository == 'nextcloud/cookbook' && 'ubuntu-latest-low' || 'ubuntu-latest' }}
         name: Run stale action
         
         steps:

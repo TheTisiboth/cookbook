@@ -11,7 +11,7 @@ jobs:
     
     todo-checker:
         name: Check for added todo messages
-        runs-on: ubuntu-latest-low
+        runs-on: ${{ github.repository == 'nextcloud/cookbook' && 'ubuntu-latest-low' || 'ubuntu-latest' }}
         steps:
             -   name: Git version output
                 run: git version
@@ -39,7 +39,7 @@ jobs:
 
     appinfo:
         name: Check for matching app info file
-        runs-on: ubuntu-latest-low
+        runs-on: ${{ github.repository == 'nextcloud/cookbook' && 'ubuntu-latest-low' || 'ubuntu-latest' }}
 
         steps:
             -   name: Checkout of the app
@@ -140,7 +140,7 @@ jobs:
 
     fixup-check:
         name: Block fixup and squash commits
-        runs-on: ubuntu-latest-low
+        runs-on: ${{ github.repository == 'nextcloud/cookbook' && 'ubuntu-latest-low' || 'ubuntu-latest' }}
 
         steps:
             -   name: Run check

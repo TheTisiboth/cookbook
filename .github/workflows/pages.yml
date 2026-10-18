@@ -70,7 +70,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest-low
+    runs-on: ${{ github.repository == 'nextcloud/cookbook' && 'ubuntu-latest-low' || 'ubuntu-latest' }}
     if: github.event.ref == 'refs/heads/master' && github.repository == 'nextcloud/cookbook'
     needs: build
     permissions:

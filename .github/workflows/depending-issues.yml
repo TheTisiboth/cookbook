@@ -31,7 +31,7 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest-low
+    runs-on: ${{ github.repository == 'nextcloud/cookbook' && 'ubuntu-latest-low' || 'ubuntu-latest' }}
     steps:
       - uses: z0al/dependent-issues@950226e7ca8fc43dc209a7febf67c655af3bdb43
         env:
