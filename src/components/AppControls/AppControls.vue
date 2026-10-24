@@ -165,6 +165,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR AGPL-3.0-or-later
             <NcActionButton
                 v-if="isRecipe"
                 class="action-button"
+                :aria-label="t('cookbook', 'Share recipe')"
+                @click="isShareDialogOpen = true"
+            >
+                <template #icon><ShareVariantIcon :size="20" /></template>
+                {{ t('cookbook', 'Share recipe') }}
+            </NcActionButton>
+            <NcActionButton
+                v-if="isRecipe"
+                class="action-button"
                 :aria-label="t('cookbook', 'Clone recipe')"
                 @click="goToRecipeClone(legacyStore.recipe.id)"
             >
@@ -183,6 +192,11 @@ SPDX-License-Identifier: AGPL-3.0-only OR AGPL-3.0-or-later
                 {{ t('cookbook', 'Delete recipe') }}
             </NcActionButton>
         </NcActions>
+        <ShareRecipeDialog
+            v-if="isShareDialogOpen && legacyStore.recipe"
+            :recipe-id="legacyStore.recipe.id"
+            @close="isShareDialogOpen = false"
+        />
     </div>
 </template>
 
@@ -203,6 +217,7 @@ import PrinterIcon from 'icons/Printer.vue';
 import AbortIcon from 'icons/Close.vue';
 import ContentDuplicateIcon from 'icons/ContentDuplicate.vue';
 import SearchIcon from 'icons/Magnify.vue';
+import ShareVariantIcon from 'icons/ShareVariant.vue';
 
 import helpers from 'cookbook/js/helper';
 import {
@@ -212,6 +227,7 @@ import {
 
 import LocationIndicator from './LocationIndicator.vue';
 import ModeIndicator from './ModeIndicator.vue';
+import ShareRecipeDialog from '../Modals/ShareRecipeDialog.vue';
 import { useIsMobile } from '@nextcloud/vue/composables/useIsMobile';
 import { useLegacyStore } from '../../store';
 import emitter from '../../bus';
@@ -223,6 +239,7 @@ const routeId = computed(() => String(route.params.id ?? ''));
 const legacyStore = useLegacyStore();
 
 const filterValue = ref('');
+const isShareDialogOpen = ref(false);
 
 /** Computed values * */
 
