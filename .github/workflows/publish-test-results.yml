@@ -40,6 +40,7 @@ jobs:
            done
 
       - name: Publish Unit Test Results
+        continue-on-error: true
         uses: EnricoMi/publish-unit-test-result-action@d0a4676d0e0b938bc201470d88276b7c74c712b3
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
