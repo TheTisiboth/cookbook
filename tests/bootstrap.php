@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 // SPDX-FileCopyrightText: 2026 Nextcloud cookbook contributors
+// trigger CI to test workflow_run codecov upload
 // SPDX-License-Identifier: AGPL-3.0-only OR AGPL-3.0-or-later
 
 use OCP\App\IAppManager;
