@@ -16,6 +16,7 @@ use OCA\Cookbook\Exception\UserFolderNotWritableException;
 use OCA\Cookbook\Helper\DownloadHelper;
 use OCA\Cookbook\Helper\FileSystem\RecipeNameHelper;
 use OCA\Cookbook\Helper\Filter\JSON\JSONFilter;
+use OCA\Cookbook\Helper\ImageService\ImageConversionHelper;
 use OCA\Cookbook\Helper\ImageService\ImageSize;
 use OCA\Cookbook\Helper\UserConfigHelper;
 use OCA\Cookbook\Helper\UserFolderHelper;
@@ -84,6 +85,7 @@ class RecipeService {
 		RecipeExtractionService $extractionService,
 		JSONFilter $jsonFilter,
 		DownloadHelper $downloadHelper,
+		private ImageConversionHelper $imageConversionHelper,
 	) {
 		$this->user_id = $UserId;
 		$this->db = $db;
@@ -115,21 +117,6 @@ class RecipeService {
 		}
 
 		return $this->parseRecipeFile($file);
-	}
-
-	/**
-	 * Get a recipe's modification time by its folder id.
-	 *
-	 * @param int $id
-	 */
-	public function getRecipeMTime(int $id): ?int {
-		$file = $this->getRecipeFileByFolderId($id);
-
-		if (!$file) {
-			return null;
-		}
-
-		return $file->getMTime();
 	}
 
 	/**
@@ -314,6 +301,13 @@ class RecipeService {
 		} else {
 			// The image field was empty, remove images in the recipe folder
 			$this->imageService->dropImage($recipe_folder);
+		}
+
+		if ($full_image_data) {
+			$full_image_data = $this->imageConversionHelper->getReadableImageData($full_image_data);
+			if ($full_image_data === null) {
+				$this->imageService->dropImage($recipe_folder);
+			}
 		}
 
 		// If image data was fetched, write it to disk
@@ -622,6 +616,22 @@ class RecipeService {
 			default:
 				throw new Exception($this->il10n->t('Image size "%s" is not recognized.', [$size]));
 		}
+	}
+
+	/**
+	 * Get the ETag of a recipe folder, which changes whenever any file in it changes
+	 *
+	 * @param int $id
+	 *
+	 * @return ?string
+	 */
+	public function getRecipeFolderEtag(int $id): ?string {
+		$recipe_folders = $this->userFolder->getById($id);
+		if (count($recipe_folders) < 1) {
+			return null;
+		}
+
+		return $recipe_folders[0]->getEtag();
 	}
 
 	/**

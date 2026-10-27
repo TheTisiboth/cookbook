@@ -87,7 +87,7 @@ class RecipeImplementation {
 		}
 
 		foreach ($recipes as $i => $recipe) {
-			$recipes[$i]['imageUrl'] = $this->urlGenerator->linkToRoute('cookbook.recipe.image', ['id' => $recipe['recipe_id'], 'size' => 'thumb']);
+			$recipes[$i]['imageUrl'] = $this->urlGenerator->linkToRoute('cookbook.recipe.image', ['id' => $recipe['recipe_id'], 'size' => 'thumb', 't' => $this->service->getRecipeFolderEtag($recipe['recipe_id'])]);
 			$recipes[$i]['imagePlaceholderUrl'] = $this->urlGenerator->linkToRoute('cookbook.recipe.image', ['id' => $recipe['recipe_id'], 'size' => 'thumb16']);
 
 			$recipes[$i] = $this->stubFilter->apply($recipes[$i]);
@@ -112,7 +112,7 @@ class RecipeImplementation {
 		}
 
 		$json['printImage'] = $this->service->getPrintImage();
-		$json['imageUrl'] = $this->urlGenerator->linkToRoute('cookbook.recipe.image', ['id' => $json['id'], 'size' => 'full']);
+		$json['imageUrl'] = $this->urlGenerator->linkToRoute('cookbook.recipe.image', ['id' => $json['id'], 'size' => 'full', 't' => $this->service->getRecipeFolderEtag($json['id'])]);
 
 		$json = $this->outputFilter->filter($json);
 
@@ -325,6 +325,12 @@ class RecipeImplementation {
 			return new JSONResponse('Field "url" is required', 400);
 		}
 
+		if (!is_string($data['url'])) {
+			return new JSONResponse('Field "url" must be a string', 400);
+		}
+
+		$data['url'] = str_replace(' ', '%20', trim($data['url']));
+
 		if (! $this->isDownloadUrlValid($data['url'])) {
 			$this->logger->warning('Attempt to download recipe by user {user} from invalid URL: {url}', ['url' => $data['url'], 'user' => $this->userId]);
 			// throw new InvalidDownloadURLException($this->l->t('The provided URL is not allowed.'));
@@ -385,7 +391,7 @@ class RecipeImplementation {
 					[
 						'id' => $recipe['recipe_id'],
 						'size' => 'thumb',
-						't' => $this->service->getRecipeMTime($recipe['recipe_id'])
+						't' => $this->service->getRecipeFolderEtag($recipe['recipe_id'])
 					]
 				);
 				$recipes[$i]['imagePlaceholderUrl'] = $this->urlGenerator->linkToRoute(
@@ -423,7 +429,7 @@ class RecipeImplementation {
 					[
 						'id' => $recipe['recipe_id'],
 						'size' => 'thumb',
-						't' => $this->service->getRecipeMTime($recipe['recipe_id'])
+						't' => $this->service->getRecipeFolderEtag($recipe['recipe_id'])
 					]
 				);
 				$recipes[$i]['imagePlaceholderUrl'] = $this->urlGenerator->linkToRoute(
@@ -463,7 +469,7 @@ class RecipeImplementation {
 					[
 						'id' => $recipe['recipe_id'],
 						'size' => 'thumb',
-						't' => $this->service->getRecipeMTime($recipe['recipe_id'])
+						't' => $this->service->getRecipeFolderEtag($recipe['recipe_id'])
 					]
 				);
 				$recipes[$i]['imagePlaceholderUrl'] = $this->urlGenerator->linkToRoute(
