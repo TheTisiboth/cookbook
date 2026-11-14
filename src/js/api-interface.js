@@ -122,6 +122,24 @@ function updateVisibleInfoBlocks(visibleInfoBlocks) {
     return instance.post(`${baseUrl}/config`, { visibleInfoBlocks });
 }
 
+function getPublicShare(id) {
+    return instance.get(`${baseUrl}/recipes/${id}/share`);
+}
+
+function createPublicShare(id) {
+    return instance.post(`${baseUrl}/recipes/${id}/share`);
+}
+
+function deletePublicShare(id) {
+    return instance.delete(`${baseUrl}/recipes/${id}/share`);
+}
+
+function getPublicRecipe(token) {
+    return instance.get(
+        `${generateUrl('apps/cookbook')}/s/${encodeURIComponent(token)}/recipe`,
+    );
+}
+
 function reindex() {
     return instance.post(`${baseUrl}/reindex`);
 }
@@ -138,6 +156,12 @@ export default {
         delete: deleteRecipe,
         import: importRecipe,
         reindex,
+        publicShare: {
+            get: getPublicShare,
+            create: createPublicShare,
+            delete: deletePublicShare,
+        },
+        getPublic: getPublicRecipe,
     },
     categories: {
         getAll: getAllCategories,

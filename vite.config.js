@@ -31,6 +31,13 @@ const devEntryRewritePlugin = {
 				)
 			}
 
+			if (req.url?.startsWith('/apps-extra/cookbook/js/cookbook-public.mjs')) {
+				req.url = req.url.replace(
+					'/apps-extra/cookbook/js/cookbook-public.mjs',
+					'/apps-extra/cookbook/src/public.ts',
+				)
+			}
+
 			if (req.url?.startsWith('/apps-extra/cookbook/js/cookbook-guest.mjs')) {
 				req.url = req.url.replace(
 					'/apps-extra/cookbook/js/cookbook-guest.mjs',
@@ -47,6 +54,7 @@ export default createAppConfig(
 	{
 		main: resolve(join('src', 'main.ts')),
 		guest: resolve(join('src', 'guest.ts')),
+		public: resolve(join('src', 'public.ts')),
 	},
 	{
 		createEmptyCSSEntryPoints: true,

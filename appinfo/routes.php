@@ -39,6 +39,15 @@ return [
 		['name' => 'config#config', 'url' => '/webapp/config', 'verb' => 'POST'],
 		['name' => 'config#reindex', 'url' => '/webapp/reindex', 'verb' => 'POST'],
 
+		['name' => 'share#show', 'url' => '/webapp/recipes/{id}/share', 'verb' => 'GET', 'requirements' => ['id' => '\d+']],
+		['name' => 'share#create', 'url' => '/webapp/recipes/{id}/share', 'verb' => 'POST', 'requirements' => ['id' => '\d+']],
+		['name' => 'share#destroy', 'url' => '/webapp/recipes/{id}/share', 'verb' => 'DELETE', 'requirements' => ['id' => '\d+']],
+
+		// Public pages of shared recipes
+		['name' => 'public_recipe#show', 'url' => '/s/{token}', 'verb' => 'GET'],
+		['name' => 'public_recipe#recipe', 'url' => '/s/{token}/recipe', 'verb' => 'GET'],
+		['name' => 'public_recipe#image', 'url' => '/s/{token}/image', 'verb' => 'GET'],
+
 		/* API routes */
 
 		// Generic routes on /api
